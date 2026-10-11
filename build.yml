@@ -1,0 +1,44 @@
+name: Build Mod
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "**"
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - name: Android64
+            os: ubuntu-latest
+            target: Android64
+          - name: Android32
+            os: ubuntu-latest
+            target: Android32
+    name: Build ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Unpack project.zip
+        run: |
+          unzip -q project.zip
+          cp -r TheGalaxy/. .
+
+      - name: Build the mod
+        id: build
+        uses: geode-sdk/build-geode-mod@main
+        with:
+          bindings: geode-sdk/bindings
+          bindings-ref: main
+          combine: false
+          target: ${{ matrix.config.target }}
+
+      - name: Save the .geode file
+        uses: actions/upload-artifact@v4
+        with:
+          name: TheGalaxy-${{ matrix.config.name }}
+          path: ${{ steps.build.outputs.build-output }}/*.geode
